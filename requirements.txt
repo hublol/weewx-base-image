@@ -1,0 +1,12 @@
+configobj
+pyephem
+pyserial
+pyusb
+willow
+pillow
+Cheetah3
+mysqlclient
+requests
+dnspython
+paho-mqtt
+setuptools

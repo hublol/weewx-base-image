@@ -1,0 +1,30 @@
+# Berchertown skin
+
+## Reference
+
+https://github.com/poblabs/weewx-belchertown
+
+https://github.com/poblabs/weewx-belchertown/wiki/Belchertown-Charts-Documentation
+
+## Customize the skin for WS-3000
+
+### Forecast (Aeris)
+
+Enable forcast:
+
+----
+[StdReport]
+    [[Belchertown]]
+        skin = Belchertown
+        HTML_ROOT = belchertown
+        [[[Extras]]]
+            forecast_enabled = 1
+            forecast_api_id = "your_id"
+            forecast_api_secret = "your_secret_key"
+----
+
+### Graphs
+
+Copy the sample graphs.conf to the root Belchertown directory.
+
+See the wiki link in the References section for the full details.

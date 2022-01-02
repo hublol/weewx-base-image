@@ -1,0 +1,346 @@
+# Exfoliation skin
+
+## References
+
+For the original repository, see: +
+https://github.com/matthewwall/weewx-exfoliation/archive/refs/heads/master.zip
+
+The skin is not working anymore with weewx 4.x and python3.
+
+The following repository is supposed to provide a working skins for weewx 4.x and python3, but one change is still missing: +
+https://github.com/chaunceygardiner/weewx-exfoliation/archive/refs/heads/master.zip
+
+
+## Fix for weewx 4.x and python3
+
+To get the skins working with the current weewx releases (4.x),
+replace `$get_windspeed_trend($trend.windSpeed.formatted)` with `$get_windspeed_trend($trend.windSpeed.raw)` line 228 in the file `index.html.tmpl`.
+
+----
+sed -i 's/\$get_windspeed_trend(\$trend.windSpeed.formatted/\$get_windspeed_trend(\$trend.windSpeed.raw/' skins/exfoliation/index.html.tmpl
+----
+
+## Customize the skin for WS-3000
+
+NOTE: assuming that the WS-3000 is used as a secondary station.
+      The default configuration is used for the main station.
+      Data from the WS-3000 is simply added to the existing configuration.
+
+### skin.conf
+
+Use the following options:
+
+----
+    # which blocks should be displayed on the 'current' page?
+    current_show_inside = true
+    current_show_celestial = true
+    current_show_tides = true
+    current_show_radar = false
+    current_show_forecast_summary = false
+    current_show_forecast_table = false
+----
+
+Update the units if needed:
+
+----
+[Units]
+    [[Groups]]
+        group_altitude     = meter
+        group_degree_day   = degree_C_day
+        group_direction    = degree_compass
+        group_moisture     = centibar
+        group_percent      = percent
+        group_pressure     = mbar
+        group_radiation    = watt_per_meter_squared
+        group_rain         = mm
+        group_rainrate     = mm_per_hour
+        group_speed        = meter_per_second
+        group_speed2       = meter_per_second2
+        group_temperature  = degree_C
+        group_uv           = uv_index
+        group_volt         = volt
+----
+
+Add the following labels (customize as required):
+
+----
+[Labels]
+    hemispheres = N, S, E, W
+    [[Generic]]
+        # mappings for the WS3000
+        extraTemp1 = E Temperature
+        extraTemp2 = SM Temperature
+        extraTemp3 = K Temperature
+        extraTemp4 = PB Temperature
+        extraTemp5 = CE Temperature
+        extraTemp6 = CO Temperature
+        extraTemp7 = SB Temperature
+        extraTemp8 = SBE Temperature
+----
+
+Finally update the image generator (change the name as required):
+
+----
+[ImageGenerator]
+    <...>
+    [[day_images]]
+        <...>
+        # For the WS3000
+        [[[dayEtemp]]]
+            [[[[extraTemp1]]]]
+
+        [[[daySMtemp]]]
+            [[[[extraTemp2]]]]
+
+        [[[dayKtemp]]]
+            [[[[extraTemp3]]]]
+
+        [[[dayPBtemp]]]
+            [[[[extraTemp4]]]]
+
+        [[[dayCEtemp]]]
+            [[[[extraTemp5]]]]
+
+        [[[dayCOtemp]]]
+            [[[[extraTemp6]]]]
+
+        [[[daySBtemp]]]
+            [[[[extraTemp7]]]]
+
+        [[[daySBEtemp]]]
+            [[[[extraTemp8]]]]
+
+    [[week_images]]
+        <...>
+        # For the WS3000
+        [[[weekEtemp]]]
+            [[[[extraTemp1]]]]
+
+        [[[weekSMtemp]]]
+            [[[[extraTemp2]]]]
+
+        [[[weekKtemp]]]
+            [[[[extraTemp3]]]]
+
+        [[[weekPBtemp]]]
+            [[[[extraTemp4]]]]
+
+        [[[weekCEtemp]]]
+            [[[[extraTemp5]]]]
+
+        [[[weekCOtemp]]]
+            [[[[extraTemp6]]]]
+
+        [[[weekSBEtemp]]]
+            [[[[extraTemp7]]]]
+
+        [[[weekSBtemp]]]
+            [[[[extraTemp8]]]]
+
+    [[month_images]]
+        <...>
+        # For the WS3000
+        [[[monthEtemp]]]
+            [[[[extraTemp1]]]]
+
+        [[[monthSMtemp]]]
+            [[[[extraTemp2]]]]
+
+        [[[monthKtemp]]]
+            [[[[extraTemp3]]]]
+
+        [[[monthPBtemp]]]
+            [[[[extraTemp4]]]]
+
+        [[[monthCEtemp]]]
+            [[[[extraTemp5]]]]
+
+        [[[monthCOtemp]]]
+            [[[[extraTemp6]]]]
+
+        [[[monthSBEtemp]]]
+            [[[[extraTemp7]]]]
+
+        [[[monthSBtemp]]]
+            [[[[extraTemp8]]]]
+
+    [[year_images]]
+        <...>    
+        # For the WS3000
+        [[[yearEtemp]]]
+            [[[[extraTemp1]]]]
+
+        [[[yearSMtemp]]]
+            [[[[extraTemp2]]]]
+
+        [[[yearKtemp]]]
+            [[[[extraTemp3]]]]
+
+        [[[yearPBtemp]]]
+            [[[[extraTemp4]]]]
+
+        [[[yearCEtemp]]]
+            [[[[extraTemp5]]]]
+
+        [[[yearCOtemp]]]
+            [[[[extraTemp6]]]]
+
+        [[[yearSBEtemp]]]
+            [[[[extraTemp7]]]]
+
+        [[[yearSBtemp]]]
+            [[[[extraTemp8]]]]
+----
+
+### index.html.tmpl
+
+Locate the entry for humidity:
+
+----
+  <tr>
+    <td class='metric_name'>Humidity<br/>Inside</td>
+    <td class='metric_large' colspan='2' >
+      <a href='dayinhum.png' class='popup'>$current.inHumidity.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.inHumidity.maxtime'>$day.inHumidity.max.formatted</span><br/>
+      <span title='$day.inHumidity.mintime'>$day.inHumidity.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.inHumidity</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+----
+
+And add the following just below:
+
+----
+  <!-- WS3000 sensor1 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>E</td>
+    <td class='metric_large' colspan='2' >
+      <a href='dayEtemp.png' class='popup'>$current.extraTemp1.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp1.maxtime'>$day.extraTemp1.max.formatted</span><br/>
+      <span title='$day.extraTemp1.mintime'>$day.extraTemp1.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp1</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor2 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>SM</td>
+    <td class='metric_large' colspan='2' >
+      <a href='daySMtemp.png' class='popup'>$current.extraTemp2.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp2.maxtime'>$day.extraTemp2.max.formatted</span><br/>
+      <span title='$day.extraTemp2.mintime'>$day.extraTemp2.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp2</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor3 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>K</td>
+    <td class='metric_large' colspan='2' >
+      <a href='dayKtemp.png' class='popup'>$current.extraTemp3.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp3.maxtime'>$day.extraTemp3.max.formatted</span><br/>
+      <span title='$day.extraTemp3.mintime'>$day.extraTemp3.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp3</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor4 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>PB</td>
+    <td class='metric_large' colspan='2' >
+      <a href='dayPBtemp.png' class='popup'>$current.extraTemp4.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp4.maxtime'>$day.extraTemp4.max.formatted</span><br/>
+      <span title='$day.extraTemp4.mintime'>$day.extraTemp4.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp4</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor5 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>CE</td>
+    <td class='metric_large' colspan='2' >
+      <a href='dayCEtemp.png' class='popup'>$current.extraTemp5.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp5.maxtime'>$day.extraTemp5.max.formatted</span><br/>
+      <span title='$day.extraTemp5.mintime'>$day.extraTemp5.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp5</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor6 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>CO</td>
+    <td class='metric_large' colspan='2' >
+      <a href='dayCOtemp.png' class='popup'>$current.extraTemp6.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp6.maxtime'>$day.extraTemp6.max.formatted</span><br/>
+      <span title='$day.extraTemp6.mintime'>$day.extraTemp6.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp6</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor7 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>SB</td>
+    <td class='metric_large' colspan='2' >
+      <a href='daySBtemp.png' class='popup'>$current.extraTemp7.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp7.maxtime'>$day.extraTemp7.max.formatted</span><br/>
+      <span title='$day.extraTemp7.mintime'>$day.extraTemp7.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp7</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+
+  <!-- WS3000 sensor8 -->
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature<br/>SBE</td>
+    <td class='metric_large' colspan='2' >
+      <a href='daySBEtemp.png' class='popup'>$current.extraTemp8.formatted</a>
+    </td>
+    <td class='metric_value'>
+      <span title='$day.extraTemp8.maxtime'>$day.extraTemp8.max.formatted</span><br/>
+      <span title='$day.extraTemp8.mintime'>$day.extraTemp8.min.formatted</span>
+    </td>
+    <td class='metric_units'>$unit.label.extraTemp8</td>
+#if $fc_summary
+    <td></td>
+#end if
+  </tr>
+----

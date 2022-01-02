@@ -1,0 +1,242 @@
+# weewx-base-image
+
+## Running weewx in docker
+
+### Why run weewx in docker
+
+Running applications in docker is trendy nowadays,
+and often easier than using a traditional installation.
+
+But one the main advantage is that the docker image is self-contained, with all the required dependencies.
+This is particularly important when planning to deploy weewx on an operating system on which installing all the prerequisites can be challenging (NAS, etc.).
+
+With docker, it is possible to run weewx with the latest python and all its dependencies without having to install anything on the host server.
+
+### Issues
+
+Unfortunately, weewx is not exactly docker friendly,
+and running it in a docker container poses several challenges:
+
+. extensions and customizations are often deployed in directories that are also containing files provided by weewx (`skins` for example, or `bin/user`). +
+  If weewx is installed inside the container (the weewx binaries are provided as part of the image),
+  ensuring the persistence of the customizations with volumes is tricky:
+  the volumes must contain files coming both from the container and from the customizations.
+  Although this can be done, this makes upgrading much more difficult.
+
+. if the configuration file is mounted in the container as a volume, some tools will fail to properly update it: `wee_extension`, for example will throw an error when installing extensions that make changes to the configuration.
+
+. the default logger is syslog, which is not running by default in containers.
+  This can be worked around in various ways (such as using supervisord to run syslog, changing the weewx logging configuration, etc.),
+  but the default configuration just don't work.
+
+### Solution
+
+A _not perfect_ but good enough solution (there are other possible approaches) to those problems is to:
+
+* persist the entire weewx folder in a volume mapped to a local directory.
+  The docker image only contains the weewx prerequisites: python, etc. +
+  The main drawback of this approach is that weewx is not updated with the docker image.
+  But this could also be viewed as an advantage,
+  since it is probably better to manually manage a weewx upgrade to avoid breaking things. +
+  The big advantage is that it becomes very easy to customize weewx,
+  or at least no more difficult than for a traditional installation.
+
+* patch weewx to log to the console by default.
+  Newer versions of weewx might actually provide a fix for the logging issue by default.
+
+## using this image
+
+Here is the suggested approach to use this image:
+
+### Set up a few variables
+
+* The version of weewx to use.
+* The name of the docker container.
+* The host path for the weewx folder.
+
+.# Example
+----
+WEEWX_IMAGE_TAG=v4.5.1
+WEEWX_TZ=Europe/Paris
+WEEWX_CONTAINER_NAME=weewx
+WEEWX_DIR=/share/homes/docker/containers/weewx
+WEEWX_IMAGE=weewx-image
+----
+
+### Build the image
+
+----
+docker build -t ${WEEWX_IMAGE} .
+----
+
+### Running the container
+
+The commands below must be adjusted if needed (the device name in particular).
+
+#### For testing/troubleshooting
+
+This command can be used to start a new container,
+and log into it.
+This is useful when troubleshooting,
+to test various commands, _etc._
+
+----
+mkdir -p ${WEEWX_DIR}
+
+docker run --rm -it --name ${WEEWX_CONTAINER_NAME}_debug \
+--volume ${WEEWX_DIR}:/home/weewx \
+--device=/dev/ttyUSB0  \
+--privileged \
+-v /dev/bus/usb:/dev/bus/usb \
+-e "TZ=${WEEWX_TZ}" \
+${WEEWX_IMAGE}:latest bash 
+----
+
+#### To install weewx
+
+This command calls the script `install_weewx.sh`,
+copied inside the container.
+
+To install a specific version of weewx,
+pass the `WEEWX_VERSION` environment variable to the container.
+Otherwise it will default to the version specified in the Dockerfile.
+
+----
+docker run --rm --name ${WEEWX_CONTAINER_NAME} \
+--volume ${WEEWX_DIR}:/home/weewx \
+--device=/dev/ttyUSB0  \
+--privileged \
+-v /dev/bus/usb:/dev/bus/usb \
+-e "TZ=${WEEWX_TZ}" \
+${WEEWX_IMAGE}:latest sh -c '${SOURCE_DIR}/scripts/install_weewx.sh'
+----
+
+NOTE: The same command can be used to upgrade weewx.
+
+NOTE: Any script can be executed like this,
+      even if it is not included in the image (in this case, it has to be accessible via one of the volumes).
+
+#### To run weewx
+
+IMPORTANT: Make sure to pass the correct TZ variable from the very beginning.
+           Updating the variable later can lead to unexpected results.
+
+----
+docker run -d --name ${WEEWX_CONTAINER_NAME} \
+--volume ${WEEWX_DIR}:/home/weewx \
+--device=/dev/ttyUSB0  \
+--privileged \
+-v /dev/bus/usb:/dev/bus/usb \
+-e "TZ=${WEEWX_TZ}" \
+${WEEWX_IMAGE}:latest /home/weewx/bin/weewxd /home/weewx/weewx.conf
+----
+
+To log into the weewx running container:
+
+----
+docker exec -it ${WEEWX_CONTAINER_NAME} bash
+----
+
+### Installing extensions
+
+[WARNING]
+====
+If the extension has prerequisites,
+those must be available in the docker image.
+Complete the Dockerfile with the prerequisites,
+then rebuilt the image.
+====
+
+The commands below are examples of how to download, then install a few extensions.
+Simply update the URLs to download different versions of those extensions,
+or edit the commands to download and install different extensions.
+
+----
+mkdir -p ${WEEWX_DIR}/extensions
+cd ${WEEWX_DIR}/extensions
+
+# Install the WS-3000 driver
+wget -O weewx-ws3000.tar.gz https://github.com/hublol/ws3000-weewx/archive/refs/tags/weewx-ws3000-0.3.tar.gz
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-ws3000.tar.gz
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_config --list-drivers
+
+# Install the WS-3000 data service
+wget -O weewx-ws3000ds.tar.gz https://github.com/hublol/ws3000-weewx-dataservice/archive/refs/tags/weewx-ws3000ds-0.2.tar.gz
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-ws3000ds.tar.gz
+
+# Install the belchertown skin
+wget -O weewx-belchertown.tar.gz https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-1.2/weewx-belchertown-release-1.2.tar.gz
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-belchertown.tar.gz
+
+# Install the exfoliation skin
+#wget -O weewx-exfoliation.zip https://github.com/matthewwall/weewx-exfoliation/archive/refs/heads/master.zip
+# Original skins not working anymore with weewx 4.x and python3,
+# use this one instead:
+wget -O weewx-exfoliation.zip https://github.com/chaunceygardiner/weewx-exfoliation/archive/refs/heads/master.zip
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-exfoliation.zip
+
+# Fix exfoliation (like 228):
+sed -i 's/\$get_windspeed_trend(\$trend.windSpeed.formatted/\$get_windspeed_trend(\$trend.windSpeed.raw/' ${WEEWX_DIR}/skins/exfoliation/index.html.tmpl
+
+# Install the MQTT plugin
+wget -O weewx-mqtt.zip https://github.com/matthewwall/weewx-mqtt/archive/master.zip
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-mqtt.zip
+
+# Install influxdb
+wget -O weewx-influx.zip https://github.com/matthewwall/weewx-influx/archive/master.zip
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-influx.zip
+
+# List the installed extensions
+docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --list
+----
+
+### Configuration
+
+It is then possible to configure/customize weewx as desired,
+as if weewx was running on the host,
+by editing the files in ${WEEWX_DIR}.
+
+To stop/restart weewx after a change,
+simply run:
+
+----
+docker stop ${WEEWX_CONTAINER_NAME}
+docker start ${WEEWX_CONTAINER_NAME}
+----
+
+It is possible to check the logs with:
+
+----
+docker logs -f ${WEEWX_CONTAINER_NAME}
+----
+
+### Docker compose
+
+Assuming that the Dockerfile is located in: +
+`/share/homes/docker/dockerfiles/weewx-base-image`
+
+A sample docker-compose section for weewx could look like this:
+
+----
+  weewx:
+    build: /share/homes/docker/dockerfiles/weewx-base-image
+    image: weewx-image:latest
+    hostname: weewx
+    container_name: weewx
+    command: /home/weewx/bin/weewxd /home/weewx/weewx.conf
+    restart: always
+    privileged: true
+    environment:
+      - "TZ=Europe/Paris"
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    volumes:
+      - ${DOCKER_ROOT}/weewx:/home/weewx
+      - /dev/bus/usb:/dev/bus/usb
+    networks:
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+----
