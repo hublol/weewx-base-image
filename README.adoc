@@ -56,11 +56,11 @@ Here is the suggested approach to use this image:
 
 .# Example
 ----
-WEEWX_IMAGE_TAG=v4.5.1
+WEEWX_IMAGE=weewx-image
+WEEWX_IMAGE_TAG=v4.10.2
 WEEWX_TZ=Europe/Paris
 WEEWX_CONTAINER_NAME=weewx
 WEEWX_DIR=/share/homes/docker/containers/weewx
-WEEWX_IMAGE=weewx-image
 ----
 
 ### Build the image
