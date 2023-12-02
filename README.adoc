@@ -102,7 +102,7 @@ pass the `WEEWX_VERSION` environment variable to the container.
 Otherwise it will default to the version specified in the Dockerfile.
 
 ----
-docker run --rm --name ${WEEWX_CONTAINER_NAME} \
+docker run --rm --name ${WEEWX_CONTAINER_NAME}_install \
 --volume ${WEEWX_DIR}:/home/weewx \
 --device=/dev/ttyUSB0  \
 --privileged \

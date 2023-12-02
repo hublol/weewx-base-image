@@ -3,7 +3,7 @@ FROM python:slim-bullseye
 
 # Modify those variable if needed
 ENV TZ=Europe/Paris
-ENV WEEWX_VERSION=4.5.1
+ENV WEEWX_VERSION=4.10.2
 # But it is recommended to keep those as is
 ENV WEEWX_HOME=/home/weewx
 ENV SOURCE_DIR=/home/sources
