@@ -71,6 +71,13 @@ WEEWX_DIR=/share/homes/docker/containers/weewx
 docker build -t ${WEEWX_IMAGE} .
 ----
 
+[WARNING]
+====
+Using the `requirements.txt` as it is will create an image with the latest versions of the python dependencies.
+This can sometimes cause issue for weewx,
+so this may have to be adjusted to force specific versions to be used instead.
+====
+
 ### Running the container
 
 The commands below must be adjusted if needed (the device name in particular).
