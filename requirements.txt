@@ -3,7 +3,7 @@ pyephem
 pyserial
 pyusb
 willow
-pillow
+pillow < 10
 Cheetah3
 mysqlclient
 requests

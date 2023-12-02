@@ -1,5 +1,7 @@
 # weewx-base-image
 
+Current tested/working version: 4.10.2
+
 ## Running weewx in docker
 
 ### Why run weewx in docker
@@ -56,11 +58,11 @@ Here is the suggested approach to use this image:
 
 .# Example
 ----
-WEEWX_IMAGE_TAG=v4.5.1
+WEEWX_IMAGE=weewx-image
+WEEWX_IMAGE_TAG=v4.10.2
 WEEWX_TZ=Europe/Paris
 WEEWX_CONTAINER_NAME=weewx
 WEEWX_DIR=/share/homes/docker/containers/weewx
-WEEWX_IMAGE=weewx-image
 ----
 
 ### Build the image
@@ -165,7 +167,7 @@ wget -O weewx-ws3000ds.tar.gz https://github.com/hublol/ws3000-weewx-dataservice
 docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-ws3000ds.tar.gz
 
 # Install the belchertown skin
-wget -O weewx-belchertown.tar.gz https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-1.2/weewx-belchertown-release-1.2.tar.gz
+wget -O weewx-belchertown.tar.gz https://github.com/poblabs/weewx-belchertown/releases/download/weewx-belchertown-1.3.1/weewx-belchertown-release.1.3.1.tar.gz
 docker exec ${WEEWX_CONTAINER_NAME} /home/weewx/bin/wee_extension --install /home/weewx/extensions/weewx-belchertown.tar.gz
 
 # Install the exfoliation skin
