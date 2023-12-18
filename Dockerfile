@@ -1,6 +1,6 @@
 # Use an official Python runtime as a parent image
-# weewx 4.10 doesn't support bookworm yet
-FROM python:slim-bullseye
+# weewx 4.10 doesn't support bookworm (or recent versions of python) yet
+FROM python:3.11-slim-bullseye
 
 # Modify those variable if needed
 ENV TZ=Europe/Paris

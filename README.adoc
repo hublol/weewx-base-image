@@ -50,6 +50,11 @@ A _not perfect_ but good enough solution (there are other possible approaches) t
 
 Here is the suggested approach to use this image:
 
+### Todo
+
+* Configure UID/GID
+* Python venv to reduce size of image
+
 ### Set up a few variables
 
 * The version of weewx to use.
